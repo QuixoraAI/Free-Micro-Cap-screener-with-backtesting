@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ledger — Micro-Cap Quant Screener</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0B0E14;
+    --ink-2:#12161F;
+    --paper:#EDEAE0;
+    --paper-dim:#9A9688;
+    --amber:#E8A33D;
+    --green:#4A9D6E;
+    --red:#C1443C;
+    --line:#262B36;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+  }
+  ::selection{background:var(--amber);color:var(--ink);}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px 80px;}
+
+  header{
+    padding:56px 0 32px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:32px;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--amber);
+    margin-bottom:14px;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(32px,5vw,52px);
+    line-height:1.05;
+    margin:0 0 14px;
+    letter-spacing:-0.01em;
+  }
+  h1 em{
+    font-style:italic;
+    font-weight:400;
+    color:var(--paper-dim);
+  }
+  .sub{
+    color:var(--paper-dim);
+    font-size:15px;
+    max-width:640px;
+    line-height:1.5;
+  }
+
+  .panel{
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    border-radius:2px;
+    padding:24px;
+    margin-bottom:24px;
+  }
+  .panel-title{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--paper-dim);
+    margin-bottom:18px;
+  }
+
+  .field-row{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:16px;
+  }
+  .field label{
+    display:block;
+    font-size:11px;
+    font-family:'JetBrains Mono',monospace;
+    color:var(--paper-dim);
+    margin-bottom:6px;
+    letter-spacing:0.04em;
+  }
+  .field input, .field select, .field textarea{
+    width:100%;
+    background:var(--ink);
+    border:1px solid var(--line);
+    color:var(--paper);
+    padding:9px 10px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    border-radius:2px;
+  }
+  .field textarea{
+    resize:vertical;
+    min-height:70px;
+    line-height:1.5;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    outline:none;
+    border-color:var(--amber);
+  }
+  .field-note{
+    font-size:11px;
+    color:var(--paper-dim);
+    margin-top:6px;
+    line-height:1.4;
+  }
+
+  .apikey-row{
+    display:flex;
+    gap:12px;
+    align-items:flex-end;
+    flex-wrap:wrap;
+  }
+  .apikey-row .field{flex:1;min-width:220px;}
+  .btn{
+    background:var(--amber);
+    color:var(--ink);
+    border:none;
+    padding:10px 20px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    border-radius:2px;
+    cursor:pointer;
+    transition:opacity .15s ease;
+    white-space:nowrap;
+  }
+  .btn:hover{opacity:0.85;}
+  .btn:disabled{opacity:0.4;cursor:not-allowed;}
+  .btn-ghost{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--paper-dim);
+  }
+  .btn-ghost:hover{border-color:var(--paper-dim);opacity:1;color:var(--paper);}
+
+  .status{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--paper-dim);
+    margin:10px 0 0;
+  }
+  .status.err{color:var(--red);}
+  .status.ok{color:var(--green);}
+
+  .progress-track{
+    width:100%;
+    height:3px;
+    background:var(--line);
+    border-radius:2px;
+    overflow:hidden;
+    margin-top:12px;
+    display:none;
+  }
+  .progress-track.active{display:block;}
+  .progress-fill{
+    height:100%;
+    background:var(--amber);
+    width:0%;
+    transition:width .2s ease;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+  }
+  thead th{
+    text-align:left;
+    padding:10px 12px;
+    font-size:10px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--paper-dim);
+    border-bottom:1px solid var(--line);
+    cursor:pointer;
+    user-select:none;
+    white-space:nowrap;
+  }
+  thead th:hover{color:var(--paper);}
+  thead th.active{color:var(--amber);}
+  tbody td{
+    padding:12px;
+    border-bottom:1px solid var(--line);
+    white-space:nowrap;
+  }
+  tbody tr:hover{background:rgba(232,163,61,0.05);}
+  .ticker{font-weight:600;color:var(--paper);}
+  .company{
+    font-family:'Inter',sans-serif;
+    color:var(--paper-dim);
+    font-size:12px;
+    max-width:220px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .pos{color:var(--green);}
+  .neg{color:var(--red);}
+  .muted{color:var(--paper-dim);}
+
+  .score-bar{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .score-track{
+    width:60px;
+    height:5px;
+    background:var(--line);
+    border-radius:3px;
+    overflow:hidden;
+  }
+  .score-fill{
+    height:100%;
+    background:var(--amber);
+  }
+
+  .empty{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--paper-dim);
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+  }
+
+  .metrics-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    margin-bottom:20px;
+  }
+  .metric-cell{
+    background:var(--ink-2);
+    padding:16px;
+  }
+  .metric-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--paper-dim);
+    margin-bottom:8px;
+  }
+  .metric-value{
+    font-family:'JetBrains Mono',monospace;
+    font-size:20px;
+    font-weight:600;
+  }
+  .metric-sub{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--paper-dim);
+    margin-top:4px;
+  }
+  .legend{
+    display:flex;
+    gap:20px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--paper-dim);
+    padding:0 24px 16px;
+  }
+  .legend-item{display:flex;align-items:center;gap:6px;}
+  .legend-swatch{width:12px;height:2px;display:inline-block;}
+
+  footer{
+    margin-top:48px;
+    padding-top:24px;
+    border-top:1px solid var(--line);
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--paper-dim);
+    line-height:1.6;
+  }
+  a{color:var(--amber);text-decoration:none;}
+  a:hover{text-decoration:underline;}
+
+  @media (max-width:640px){
+    header{padding:36px 0 24px;}
+    .panel{padding:16px;}
+    table{font-size:11px;}
+    .company{max-width:120px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Ledger / 001</div>
+    <h1>Micro-Cap Quant <em>Screener</em></h1>
+    <p class="sub">Scores a watchlist of US micro-caps on price momentum and range position, pulled live from Financial Modeling Prep's free tier.</p>
+  </header>
+
+  <div class="panel">
+    <div class="panel-title">Data Connection</div>
+    <div class="apikey-row">
+      <div class="field">
+        <label for="apiKey">FMP API Key</label>
+        <input type="password" id="apiKey" placeholder="Paste your free API key">
+      </div>
+      <button class="btn" id="saveKeyBtn">Save Key</button>
+      <button class="btn btn-ghost" id="clearKeyBtn">Clear</button>
+    </div>
+    <p class="status" id="keyStatus">No key saved yet. Get a free one at financialmodelingprep.com — 250 requests/day, no card required.</p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Watchlist</div>
+    <div class="field">
+      <label>Tickers (comma or newline separated)</label>
+      <textarea id="tickerList">CARS, HAYN, ARLO, VTOL, BFH, GENC, ARCH, PBI, UFPT, NPK, TWI, EACO, MLKN, NVEE, VIAV, EVI, GEF-B, KFY, SPTN, LGND</textarea>
+      <p class="field-note">This is a starter list of small/micro-cap tickers to try — swap in your own. Each ticker costs 1 API call, so up to 250 tickers per day on the free plan.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Filter Results</div>
+    <div class="field-row">
+      <div class="field">
+        <label>Market Cap Min ($M)</label>
+        <input type="number" id="mcMin" value="50">
+      </div>
+      <div class="field">
+        <label>Market Cap Max ($M)</label>
+        <input type="number" id="mcMax" value="300">
+      </div>
+      <div class="field">
+        <label>Max Beta (blank = ignore)</label>
+        <input type="number" id="betaMax" step="0.1" placeholder="e.g. 2.0">
+      </div>
+      <div class="field">
+        <label>Min Avg Volume</label>
+        <input type="number" id="volMin" value="0">
+      </div>
+      <div class="field">
+        <label>Sector</label>
+        <select id="sector">
+          <option value="">All Sectors</option>
+          <option value="Technology">Technology</option>
+          <option value="Healthcare">Healthcare</option>
+          <option value="Industrials">Industrials</option>
+          <option value="Energy">Energy</option>
+          <option value="Financial Services">Financial Services</option>
+          <option value="Consumer Cyclical">Consumer Cyclical</option>
+          <option value="Basic Materials">Basic Materials</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:18px;display:flex;gap:12px;align-items:center;">
+      <button class="btn" id="runBtn">Run Screen</button>
+      <span class="status" id="runStatus"></span>
+    </div>
+    <div class="progress-track" id="progressTrack"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+
+  <div class="panel" style="padding:0;overflow-x:auto;">
+    <div id="tableWrap">
+      <div class="empty">Add tickers above and run a screen to see results here.</div>
+    </div>
+  </div>
+
+  <header style="padding:40px 0 20px;margin-bottom:24px;">
+    <div class="eyebrow">Ledger / 002</div>
+    <h1 style="font-size:clamp(26px,4vw,38px);">Strategy <em>Backtest</em></h1>
+    <p class="sub">Ranks your watchlist by trailing momentum at each rebalance, holds the top N equal-weighted, and compares the result to a buy-and-hold benchmark of the same list.</p>
+  </header>
+
+  <div class="panel">
+    <div class="panel-title">Backtest Settings</div>
+    <div class="field-row">
+      <div class="field">
+        <label>Start Date</label>
+        <input type="date" id="btStart">
+      </div>
+      <div class="field">
+        <label>End Date</label>
+        <input type="date" id="btEnd">
+      </div>
+      <div class="field">
+        <label>Rebalance</label>
+        <select id="btRebalance">
+          <option value="monthly">Monthly</option>
+          <option value="quarterly">Quarterly</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Momentum Lookback (days)</label>
+        <input type="number" id="btLookback" value="90">
+      </div>
+      <div class="field">
+        <label>Hold Top N</label>
+        <input type="number" id="btTopN" value="5" min="1">
+      </div>
+      <div class="field">
+        <label>Starting Capital ($)</label>
+        <input type="number" id="btCapital" value="10000">
+      </div>
+      <div class="field">
+        <label>Transaction Cost (bps per trade)</label>
+        <input type="number" id="btCostBps" value="50" min="0">
+      </div>
+      <div class="field">
+        <label>Validation Periods</label>
+        <select id="btPeriods">
+          <option value="1">1 (no split)</option>
+          <option value="2">2 sub-periods</option>
+          <option value="3" selected>3 sub-periods</option>
+          <option value="4">4 sub-periods</option>
+        </select>
+      </div>
+    </div>
+    <p class="field-note" style="margin-top:14px;">Uses the same watchlist as the screener above. Each ticker costs 1 API call (historical price series). Transaction cost and volume-based slippage are now modeled. Validation periods split your date range into independent, non-overlapping chunks so one lucky stretch can't carry the whole result. <strong>Survivorship bias is still not corrected</strong> — your watchlist reflects stocks that exist today, not the full set that existed historically, and fixing that requires point-in-time constituent data this app doesn't have access to. Treat all results as directional, not a basis for real capital.</p>
+    <div style="margin-top:14px;display:flex;gap:12px;align-items:center;">
+      <button class="btn" id="btRunBtn">Run Backtest</button>
+      <span class="status" id="btStatus"></span>
+    </div>
+    <div class="progress-track" id="btProgressTrack"><div class="progress-fill" id="btProgressFill"></div></div>
+  </div>
+
+  <div class="panel" id="btResultsPanel" style="display:none;">
+    <div class="panel-title">Results</div>
+    <div class="metrics-grid" id="btMetrics"></div>
+    <div class="legend">
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--amber);"></span>Momentum Strategy</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--paper-dim);"></span>Buy &amp; Hold Benchmark</div>
+    </div>
+    <div id="btChartWrap" style="padding:0 24px 24px;"></div>
+  </div>
+
+  <footer>
+    Data via Financial Modeling Prep (free tier — company profile endpoint, one call per ticker).<br>
+    <strong>Not investment advice.</strong> Micro-caps carry high volatility and liquidity risk — do your own diligence.<br>
+    <strong>On the Quant Score:</strong> FMP's free plan does not include P/E, P/B, or other fundamental ratios (those require a paid plan). So this score is a momentum/range-position proxy, not a true value score: 50% "cheapness" (how close price sits to its own 52-week low) + 50% momentum (today's % change). Edit <code>computeScores()</code> in the source if you upgrade your FMP plan and want to fold in real fundamentals.
+  </footer>
+
+</div>
+
+<script>
+const KEY_STORAGE = 'fmp_api_key';
+
+const apiKeyInput = document.getElementById('apiKey');
+const keyStatus = document.getElementById('keyStatus');
+const runStatus = document.getElementById('runStatus');
+const tableWrap = document.getElementById('tableWrap');
+const runBtn = document.getElementById('runBtn');
+const progressTrack = document.getElementById('progressTrack');
+const progressFill = document.getElementById('progressFill');
+
+let currentResults = [];
+let sortState = { col: 'score', dir: 'desc' };
+
+function loadKey(){
+  const k = localStorage.getItem(KEY_STORAGE);
+  if(k){
+    apiKeyInput.value = k;
+    keyStatus.textContent = 'Key loaded from local storage.';
+    keyStatus.className = 'status ok';
+  }
+}
+loadKey();
+
+document.getElementById('saveKeyBtn').addEventListener('click', () => {
+  const k = apiKeyInput.value.trim();
+  if(!k){
+    keyStatus.textContent = 'Enter a key before saving.';
+    keyStatus.className = 'status err';
+    return;
+  }
+  localStorage.setItem(KEY_STORAGE, k);
+  keyStatus.textContent = 'Key saved to this browser (localStorage). Not sent anywhere except FMP.';
+  keyStatus.className = 'status ok';
+});
+
+document.getElementById('clearKeyBtn').addEventListener('click', () => {
+  localStorage.removeItem(KEY_STORAGE);
+  apiKeyInput.value = '';
+  keyStatus.textContent = 'Key cleared.';
+  keyStatus.className = 'status';
+});
+
+function getKey(){
+  return apiKeyInput.value.trim() || localStorage.getItem(KEY_STORAGE) || '';
+}
+
+function parseTickers(){
+  const raw = document.getElementById('tickerList').value || '';
+  return raw.split(/[\s,]+/).map(t => t.trim().toUpperCase()).filter(Boolean);
+}
+
+async function fetchProfile(symbol, key){
+  const url = `https://financialmodelingprep.com/stable/profile?symbol=${encodeURIComponent(symbol)}&apikey=${key}`;
+  const res = await fetch(url);
+  if(!res.ok){
+    let detail = '';
+    try{
+      const errBody = await res.json();
+      detail = errBody['Error Message'] || errBody.message || '';
+    } catch(e){}
+    throw new Error(detail || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  if(!Array.isArray(data) || data.length === 0) return null;
+  return data[0];
+}
+
+async function runScreen(){
+  const key = getKey();
+  if(!key){
+    runStatus.textContent = 'Add your FMP API key above first.';
+    runStatus.className = 'status err';
+    return;
+  }
+
+  const tickers = parseTickers();
+  if(tickers.length === 0){
+    runStatus.textContent = 'Add at least one ticker to your watchlist.';
+    runStatus.className = 'status err';
+    return;
+  }
+
+  const mcMin = Number(document.getElementById('mcMin').value || 0) * 1e6;
+  const mcMax = Number(document.getElementById('mcMax').value || Infinity) * 1e6;
+  const betaMaxVal = document.getElementById('betaMax').value;
+  const volMin = Number(document.getElementById('volMin').value || 0);
+  const sector = document.getElementById('sector').value;
+
+  runBtn.disabled = true;
+  progressTrack.classList.add('active');
+  progressFill.style.width = '0%';
+  runStatus.textContent = `Fetching ${tickers.length} profiles…`;
+  runStatus.className = 'status';
+  tableWrap.innerHTML = '<div class="empty">Loading…</div>';
+
+  const rows = [];
+  const skipped = [];
+  let done = 0;
+
+  for(const symbol of tickers){
+    try{
+      const p = await fetchProfile(symbol, key);
+      if(!p){
+        skipped.push(`${symbol} (no data)`);
+      } else {
+        rows.push(p);
+      }
+    } catch(err){
+      skipped.push(`${symbol} (${err.message})`);
+    }
+    done++;
+    progressFill.style.width = `${Math.round((done/tickers.length)*100)}%`;
+  }
+
+  progressTrack.classList.remove('active');
+  runBtn.disabled = false;
+
+  if(rows.length === 0){
+    runStatus.textContent = 'No data returned. Check your key, symbols, or daily limit.';
+    runStatus.className = 'status err';
+    tableWrap.innerHTML = `<div class="empty">No results.${skipped.length ? ' Issues: ' + skipped.join(', ') : ''}</div>`;
+    return;
+  }
+
+  let filtered = rows.filter(r => {
+    if(r.mktCap != null && (r.mktCap < mcMin || r.mktCap > mcMax)) return false;
+    if(betaMaxVal && r.beta != null && r.beta > Number(betaMaxVal)) return false;
+    if(volMin && r.volAvg != null && r.volAvg < volMin) return false;
+    if(sector && r.sector !== sector) return false;
+    return true;
+  });
+
+  computeScores(filtered);
+  currentResults = filtered;
+  renderTable();
+
+  let msg = `${filtered.length} of ${rows.length} matched your filters.`;
+  if(skipped.length) msg += ` ${skipped.length} ticker(s) skipped: ${skipped.join(', ')}.`;
+  runStatus.textContent = msg;
+  runStatus.className = filtered.length ? 'status ok' : 'status err';
+}
+
+function parseRange(rangeStr){
+  if(!rangeStr || typeof rangeStr !== 'string') return {low:null, high:null};
+  const parts = rangeStr.split('-').map(s => parseFloat(s));
+  if(parts.length !== 2 || parts.some(isNaN)) return {low:null, high:null};
+  return {low: parts[0], high: parts[1]};
+}
+
+function computeScores(rows){
+  rows.forEach(r => {
+    const {low, high} = parseRange(r.range);
+    let cheapness = 0.5;
+    if(low != null && high != null && high > low && r.price != null){
+      const pos = (r.price - low) / (high - low);
+      cheapness = 1 - Math.max(0, Math.min(1, pos));
+    }
+
+    let changePct = r.changesPercentage;
+    if(changePct == null && r.changes != null && r.price != null){
+      const prevClose = r.price - r.changes;
+      if(prevClose) changePct = (r.changes / prevClose) * 100;
+    }
+    let momentum = 0.5;
+    if(changePct != null){
+      momentum = Math.max(0, Math.min(1, 0.5 + (changePct / 20)));
+    }
+
+    r._changePct = changePct;
+    r._yearLow = low;
+    r._yearHigh = high;
+    r.score = (cheapness * 0.5 + momentum * 0.5) * 100;
+  });
+}
+
+function fmtMoney(n){
+  if(n == null) return '—';
+  if(n >= 1e6) return '$' + (n/1e6).toFixed(1) + 'M';
+  return '$' + Number(n).toLocaleString();
+}
+function fmtNum(n, d=2){
+  if(n == null || isNaN(n)) return '—';
+  return Number(n).toFixed(d);
+}
+function fmtPct(n){
+  if(n == null || isNaN(n)) return '—';
+  const sign = n >= 0 ? '+' : '';
+  return `${sign}${Number(n).toFixed(2)}%`;
+}
+
+function sortRows(){
+  const { col, dir } = sortState;
+  currentResults.sort((a,b) => {
+    let av = a[col], bv = b[col];
+    if(col === 'changePct'){ av = a._changePct; bv = b._changePct; }
+    if(av == null) av = -Infinity;
+    if(bv == null) bv = -Infinity;
+    if(typeof av === 'string') return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    return dir === 'asc' ? av - bv : bv - av;
+  });
+}
+
+function renderTable(){
+  sortRows();
+  const cols = [
+    {key:'symbol', label:'Ticker'},
+    {key:'companyName', label:'Company'},
+    {key:'sector', label:'Sector'},
+    {key:'mktCap', label:'Mkt Cap'},
+    {key:'price', label:'Price'},
+    {key:'changePct', label:'Chg %'},
+    {key:'beta', label:'Beta'},
+    {key:'score', label:'Quant Score'},
+  ];
+
+  let html = '<table><thead><tr>';
+  cols.forEach(c => {
+    const active = sortState.col === c.key ? 'active' : '';
+    const arrow = sortState.col === c.key ? (sortState.dir === 'asc' ? ' ▲' : ' ▼') : '';
+    html += `<th class="${active}" data-col="${c.key}">${c.label}${arrow}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  currentResults.forEach(r => {
+    const chg = r._changePct;
+    const chgClass = chg == null ? 'muted' : (chg >= 0 ? 'pos' : 'neg');
+    html += `<tr>
+      <td class="ticker">${r.symbol}</td>
+      <td class="company" title="${r.companyName || ''}">${r.companyName || '—'}</td>
+      <td class="muted">${r.sector || '—'}</td>
+      <td>${fmtMoney(r.mktCap)}</td>
+      <td>$${fmtNum(r.price)}</td>
+      <td class="${chgClass}">${fmtPct(chg)}</td>
+      <td class="muted">${fmtNum(r.beta)}</td>
+      <td>
+        <div class="score-bar">
+          <div class="score-track"><div class="score-fill" style="width:${Math.max(0,Math.min(100,r.score))}%"></div></div>
+          <span>${fmtNum(r.score,0)}</span>
+        </div>
+      </td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  tableWrap.innerHTML = html;
+
+  document.querySelectorAll('thead th').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if(sortState.col === col){
+        sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortState = { col, dir: 'desc' };
+      }
+      renderTable();
+    });
+  });
+}
+
+runBtn.addEventListener('click', runScreen);
+
+// ---------- Backtest ----------
+
+const btStart = document.getElementById('btStart');
+const btEnd = document.getElementById('btEnd');
+const btRunBtn = document.getElementById('btRunBtn');
+const btStatus = document.getElementById('btStatus');
+const btProgressTrack = document.getElementById('btProgressTrack');
+const btProgressFill = document.getElementById('btProgressFill');
+const btResultsPanel = document.getElementById('btResultsPanel');
+const btMetrics = document.getElementById('btMetrics');
+const btChartWrap = document.getElementById('btChartWrap');
+
+(function setDefaultDates(){
+  const end = new Date();
+  const start = new Date();
+  start.setFullYear(start.getFullYear() - 2);
+  btEnd.value = end.toISOString().slice(0,10);
+  btStart.value = start.toISOString().slice(0,10);
+})();
+
+async function fetchHistory(symbol, key, from, to){
+  const url = `https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=${encodeURIComponent(symbol)}&from=${from}&to=${to}&apikey=${key}`;
+  const res = await fetch(url);
+  if(!res.ok){
+    let detail = '';
+    try{
+      const errBody = await res.json();
+      detail = errBody['Error Message'] || errBody.message || '';
+    } catch(e){}
+    throw new Error(detail || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  const arr = Array.isArray(data) ? data : (data.historical || []);
+  // Normalize to ascending date order, map date -> close + volume
+  const series = arr.map(d => ({date: d.date, close: d.close, volume: d.volume || 0})).filter(d => d.date && d.close != null);
+  series.sort((a,b) => a.date < b.date ? -1 : (a.date > b.date ? 1 : 0));
+  return series;
+}
+
+function indexOnOrBefore(series, dateStr){
+  let lo = 0, hi = series.length - 1, ans = -1;
+  while(lo <= hi){
+    const mid = (lo + hi) >> 1;
+    if(series[mid].date <= dateStr){ ans = mid; lo = mid + 1; } else { hi = mid - 1; }
+  }
+  return ans;
+}
+
+// Trailing average daily dollar volume (close * volume) over a lookback window,
+// used to estimate how much a trade might move an illiquid micro-cap's price.
+function avgDollarVolume(series, dateStr, window = 20){
+  const idx = indexOnOrBefore(series, dateStr);
+  if(idx < 0) return null;
+  const start = Math.max(0, idx - window + 1);
+  const slice = series.slice(start, idx + 1);
+  if(slice.length === 0) return null;
+  const sum = slice.reduce((a, p) => a + (p.close * (p.volume || 0)), 0);
+  return sum / slice.length;
+}
+
+// Estimated total cost (bps) for a trade: a fixed cost (spread/commission proxy)
+// plus a liquidity-impact component that scales with how large the trade is
+// relative to the stock's own average daily dollar volume. This is a simple,
+// clearly-labeled heuristic, not a precise market-impact model.
+function estimateSlippageBps(tradeValue, avgDollarVol, baseBps){
+  if(!avgDollarVol || avgDollarVol <= 0) return baseBps + 300; // no volume data: assume illiquid
+  const participation = tradeValue / avgDollarVol;
+  const impactBps = Math.min(500, participation * 10000 * 0.5);
+  return baseBps + impactBps;
+}
+
+function addDaysToDateStr(dateStr, days){
+  const d = new Date(dateStr + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0,10);
+}
+
+function buildCalendar(seriesMap){
+  // Union of all trading dates across tickers, sorted
+  const dateSet = new Set();
+  Object.values(seriesMap).forEach(series => series.forEach(pt => dateSet.add(pt.date)));
+  return Array.from(dateSet).sort();
+}
+
+function priceOnOrBefore(series, dateStr){
+  // series assumed sorted ascending by date; binary search for last date <= dateStr
+  let lo = 0, hi = series.length - 1, ans = -1;
+  while(lo <= hi){
+    const mid = (lo + hi) >> 1;
+    if(series[mid].date <= dateStr){ ans = mid; lo = mid + 1; } else { hi = mid - 1; }
+  }
+  return ans >= 0 ? series[ans].close : null;
+}
+
+function getRebalanceDates(calendar, startStr, endStr, frequency){
+  const inRange = calendar.filter(d => d >= startStr && d <= endStr);
+  if(inRange.length === 0) return [];
+  const picks = [];
+  let lastKey = null;
+  inRange.forEach(d => {
+    const dt = new Date(d + 'T00:00:00Z');
+    const month = dt.getUTCMonth();
+    const key = frequency === 'quarterly' ? `${dt.getUTCFullYear()}-Q${Math.floor(month/3)}` : `${dt.getUTCFullYear()}-${month}`;
+    if(key !== lastKey){
+      picks.push(d);
+      lastKey = key;
+    }
+  });
+  return picks;
+}
+
+function computeMetrics(curve){
+  if(curve.length < 2) return null;
+  const initial = curve[0].value;
+  const final = curve[curve.length - 1].value;
+  const totalReturn = (final / initial - 1) * 100;
+  const days = (new Date(curve[curve.length-1].date) - new Date(curve[0].date)) / (1000*60*60*24);
+  const years = days / 365.25;
+  const cagr = years > 0 ? (Math.pow(final / initial, 1/years) - 1) * 100 : null;
+
+  let peak = curve[0].value;
+  let maxDD = 0;
+  const dailyReturns = [];
+  for(let i=1;i<curve.length;i++){
+    peak = Math.max(peak, curve[i].value);
+    const dd = (curve[i].value - peak) / peak;
+    if(dd < maxDD) maxDD = dd;
+    const r = curve[i].value / curve[i-1].value - 1;
+    dailyReturns.push(r);
+  }
+  const meanDaily = dailyReturns.reduce((a,b)=>a+b,0) / dailyReturns.length;
+  const variance = dailyReturns.reduce((a,b)=>a+Math.pow(b-meanDaily,2),0) / dailyReturns.length;
+  const dailyVol = Math.sqrt(variance);
+  const annualVol = dailyVol * Math.sqrt(252) * 100;
+  const annualRet = meanDaily * 252;
+  const sharpe = dailyVol > 0 ? (annualRet / (dailyVol * Math.sqrt(252))) : null;
+
+  return {
+    totalReturn, cagr, maxDrawdown: maxDD * 100, annualVol, sharpe
+  };
+}
+
+// Runs one full strategy + benchmark simulation over [startStr, endStr] using
+// data already fetched in seriesMap. Applies transaction cost + slippage on
+// every buy and sell. Returns curves, cost totals, and per-period metrics.
+function simulate(seriesMap, validSymbols, calendar, startStr, endStr, lookback, topN, capital, frequency, costBps){
+  const periodCalendar = calendar.filter(d => d >= startStr && d <= endStr);
+  if(periodCalendar.length < 3) return null;
+
+  const rebalanceDates = getRebalanceDates(periodCalendar, startStr, endStr, frequency);
+
+  // --- Strategy: momentum top-N, equal-weight, rebalanced, cost-aware ---
+  let cash = capital;
+  let holdings = {}; // symbol -> units
+  let totalCostPaid = 0;
+  const strategyCurve = [];
+
+  function portfolioValue(dateStr){
+    let v = cash;
+    for(const sym in holdings){
+      const px = priceOnOrBefore(seriesMap[sym], dateStr);
+      if(px != null) v += holdings[sym] * px;
+    }
+    return v;
+  }
+
+  let rebalIdx = 0;
+  for(const dateStr of periodCalendar){
+    if(rebalIdx < rebalanceDates.length && dateStr === rebalanceDates[rebalIdx]){
+      // Sell everything currently held, applying per-position slippage
+      for(const sym in holdings){
+        const px = priceOnOrBefore(seriesMap[sym], dateStr);
+        if(px == null){ continue; }
+        const gross = holdings[sym] * px;
+        const avgVol = avgDollarVolume(seriesMap[sym], dateStr);
+        const bps = estimateSlippageBps(gross, avgVol, costBps);
+        const cost = gross * (bps / 10000);
+        cash += (gross - cost);
+        totalCostPaid += cost;
+      }
+      holdings = {};
+
+      // Score by trailing momentum as of this date
+      const lookbackDate = addDaysToDateStr(dateStr, -lookback);
+      const scored = validSymbols.map(sym => {
+        const pNow = priceOnOrBefore(seriesMap[sym], dateStr);
+        const pThen = priceOnOrBefore(seriesMap[sym], lookbackDate);
+        if(pNow == null || pThen == null || pThen === 0) return {sym, score: -Infinity};
+        return {sym, score: (pNow / pThen) - 1};
+      }).filter(s => s.score !== -Infinity);
+
+      scored.sort((a,b) => b.score - a.score);
+      const picks = scored.slice(0, topN);
+
+      if(picks.length > 0){
+        const perSlot = cash / picks.length;
+        picks.forEach(p => {
+          const px = priceOnOrBefore(seriesMap[p.sym], dateStr);
+          if(px && px > 0){
+            const avgVol = avgDollarVolume(seriesMap[p.sym], dateStr);
+            const bps = estimateSlippageBps(perSlot, avgVol, costBps);
+            const cost = perSlot * (bps / 10000);
+            const netAlloc = perSlot - cost;
+            holdings[p.sym] = netAlloc / px;
+            totalCostPaid += cost;
+          }
+        });
+        cash = 0;
+      }
+      rebalIdx++;
+    }
+    strategyCurve.push({date: dateStr, value: portfolioValue(dateStr)});
+  }
+
+  // --- Benchmark: equal-weight buy & hold, cost applied once at entry only ---
+  const startDate = periodCalendar[0];
+  const perSlotBH = capital / validSymbols.length;
+  const bhUnits = {};
+  let bhCostPaid = 0;
+  validSymbols.forEach(sym => {
+    const px = priceOnOrBefore(seriesMap[sym], startDate);
+    if(px && px > 0){
+      const avgVol = avgDollarVolume(seriesMap[sym], startDate);
+      const bps = estimateSlippageBps(perSlotBH, avgVol, costBps);
+      const cost = perSlotBH * (bps / 10000);
+      bhUnits[sym] = (perSlotBH - cost) / px;
+      bhCostPaid += cost;
+    }
+  });
+  const benchmarkCurve = periodCalendar.map(dateStr => {
+    let v = 0;
+    for(const sym in bhUnits){
+      const px = priceOnOrBefore(seriesMap[sym], dateStr);
+      if(px != null) v += bhUnits[sym] * px;
+    }
+    return {date: dateStr, value: v};
+  });
+
+  return { strategyCurve, benchmarkCurve, totalCostPaid, bhCostPaid };
+}
+
+// Splits [startStr, endStr] into n equal-length, non-overlapping sub-periods —
+// used for validation so one lucky stretch can't carry the whole result.
+function splitPeriods(startStr, endStr, n){
+  if(n <= 1) return [[startStr, endStr]];
+  const startMs = new Date(startStr + 'T00:00:00Z').getTime();
+  const endMs = new Date(endStr + 'T00:00:00Z').getTime();
+  const totalMs = endMs - startMs;
+  const periods = [];
+  for(let i = 0; i < n; i++){
+    const pStart = new Date(startMs + (totalMs * i / n));
+    const pEnd = new Date(startMs + (totalMs * (i + 1) / n));
+    periods.push([pStart.toISOString().slice(0,10), pEnd.toISOString().slice(0,10)]);
+  }
+  return periods;
+}
+
+async function runBacktest(){
+  const key = getKey();
+  if(!key){
+    btStatus.textContent = 'Add your FMP API key above first.';
+    btStatus.className = 'status err';
+    return;
+  }
+  const tickers = parseTickers();
+  if(tickers.length < 2){
+    btStatus.textContent = 'Add at least 2 tickers to your watchlist to backtest.';
+    btStatus.className = 'status err';
+    return;
+  }
+
+  const startStr = btStart.value;
+  const endStr = btEnd.value;
+  if(!startStr || !endStr || startStr >= endStr){
+    btStatus.textContent = 'Pick a valid start and end date.';
+    btStatus.className = 'status err';
+    return;
+  }
+
+  const lookback = Number(document.getElementById('btLookback').value || 90);
+  const topN = Math.max(1, Number(document.getElementById('btTopN').value || 5));
+  const capital = Number(document.getElementById('btCapital').value || 10000);
+  const frequency = document.getElementById('btRebalance').value;
+
+  // Fetch extra buffer before start so momentum lookback has data at first rebalance
+  const fetchFrom = addDaysToDateStr(startStr, -Math.ceil(lookback * 1.8) - 10);
+
+  btRunBtn.disabled = true;
+  btProgressTrack.classList.add('active');
+  btProgressFill.style.width = '0%';
+  btStatus.textContent = `Fetching price history for ${tickers.length} tickers…`;
+  btStatus.className = 'status';
+  btResultsPanel.style.display = 'none';
+
+  const seriesMap = {};
+  const failed = [];
+  let done = 0;
+  for(const symbol of tickers){
+    try{
+      const series = await fetchHistory(symbol, key, fetchFrom, endStr);
+      if(series.length > 0) seriesMap[symbol] = series;
+      else failed.push(symbol);
+    } catch(err){
+      failed.push(`${symbol} (${err.message})`);
+    }
+    done++;
+    btProgressFill.style.width = `${Math.round((done/tickers.length)*100)}%`;
+  }
+
+  btProgressTrack.classList.remove('active');
+  btRunBtn.disabled = false;
+
+  const validSymbols = Object.keys(seriesMap);
+  if(validSymbols.length < 2){
+    btStatus.textContent = 'Not enough valid price data to backtest. Check your key, dates, or tickers.';
+    btStatus.className = 'status err';
+    return;
+  }
+
+  const calendar = buildCalendar(seriesMap);
+  const fullCalendarInRange = calendar.filter(d => d >= startStr && d <= endStr);
+  if(fullCalendarInRange.length < 5){
+    btStatus.textContent = 'Not enough trading days in this date range.';
+    btStatus.className = 'status err';
+    return;
+  }
+
+  const costBps = Math.max(0, Number(document.getElementById('btCostBps').value || 0));
+  const numPeriods = Number(document.getElementById('btPeriods').value || 1);
+
+  // Headline result: full date range, cost- and slippage-aware
+  const headline = simulate(seriesMap, validSymbols, calendar, startStr, endStr, lookback, topN, capital, frequency, costBps);
+  if(!headline){
+    btStatus.textContent = 'Could not simulate this date range — try a wider window.';
+    btStatus.className = 'status err';
+    return;
+  }
+  const stratMetrics = computeMetrics(headline.strategyCurve);
+  const benchMetrics = computeMetrics(headline.benchmarkCurve);
+
+  // Validation: split the same range into independent sub-periods, no extra API calls needed
+  const periodRanges = splitPeriods(startStr, endStr, numPeriods);
+  const periodResults = periodRanges.map(([pStart, pEnd], i) => {
+    const res = simulate(seriesMap, validSymbols, calendar, pStart, pEnd, lookback, topN, capital, frequency, costBps);
+    if(!res) return null;
+    const sm = computeMetrics(res.strategyCurve);
+    const bm = computeMetrics(res.benchmarkCurve);
+    return { index: i + 1, start: pStart, end: pEnd, stratReturn: sm?.totalReturn, benchReturn: bm?.totalReturn };
+  }).filter(Boolean);
+
+  renderBacktestResults(stratMetrics, benchMetrics, headline.strategyCurve, headline.benchmarkCurve, failed, capital, headline.totalCostPaid, headline.bhCostPaid, periodResults);
+}
+
+function fmtSignedPct(n, d=1){
+  if(n == null || isNaN(n)) return '—';
+  const sign = n >= 0 ? '+' : '';
+  return `${sign}${n.toFixed(d)}%`;
+}
+
+function renderBacktestResults(strat, bench, stratCurve, benchCurve, failed, capital, totalCostPaid, bhCostPaid, periodResults){
+  btResultsPanel.style.display = 'block';
+
+  const cells = [
+    {label:'Total Return', stratVal: fmtSignedPct(strat?.totalReturn), benchVal: fmtSignedPct(bench?.totalReturn)},
+    {label:'CAGR', stratVal: fmtSignedPct(strat?.cagr), benchVal: fmtSignedPct(bench?.cagr)},
+    {label:'Max Drawdown', stratVal: fmtSignedPct(strat?.maxDrawdown), benchVal: fmtSignedPct(bench?.maxDrawdown)},
+    {label:'Annualized Vol', stratVal: fmtSignedPct(strat?.annualVol), benchVal: fmtSignedPct(bench?.annualVol)},
+    {label:'Sharpe (rf=0)', stratVal: strat?.sharpe != null ? strat.sharpe.toFixed(2) : '—', benchVal: bench?.sharpe != null ? bench.sharpe.toFixed(2) : '—'},
+    {label:'Trading Costs Paid', stratVal: `$${(totalCostPaid||0).toFixed(0)} (${((totalCostPaid||0)/capital*100).toFixed(2)}%)`, benchVal: `$${(bhCostPaid||0).toFixed(0)} (${((bhCostPaid||0)/capital*100).toFixed(2)}%)`},
+  ];
+
+  btMetrics.innerHTML = cells.map(c => `
+    <div class="metric-cell">
+      <div class="metric-label">${c.label}</div>
+      <div class="metric-value">${c.stratVal}</div>
+      <div class="metric-sub">Benchmark: ${c.benchVal}</div>
+    </div>
+  `).join('');
+
+  btChartWrap.innerHTML = renderEquityChart(stratCurve, benchCurve);
+  btChartWrap.innerHTML += renderValidationTable(periodResults);
+
+  let msg = `Backtest complete.`;
+  if(failed.length) msg += ` Skipped: ${failed.join(', ')}.`;
+  btStatus.textContent = msg;
+  btStatus.className = 'status ok';
+}
+
+function renderValidationTable(periodResults){
+  if(!periodResults || periodResults.length <= 1) return '';
+
+  const wins = periodResults.filter(p => (p.stratReturn ?? -Infinity) > (p.benchReturn ?? -Infinity)).length;
+
+  let html = `<div style="margin-top:24px;">
+    <div class="panel-title" style="margin-bottom:10px;">Validation: Independent Sub-Periods</div>
+    <p class="field-note" style="margin-bottom:14px;">Same date range split into ${periodResults.length} non-overlapping chunks, each tested independently. Strategy beat benchmark in <strong>${wins} of ${periodResults.length}</strong> periods.</p>
+    <table><thead><tr>
+      <th>Period</th><th>Dates</th><th>Strategy Return</th><th>Benchmark Return</th><th>Outcome</th>
+    </tr></thead><tbody>`;
+
+  periodResults.forEach(p => {
+    const beat = (p.stratReturn ?? -Infinity) > (p.benchReturn ?? -Infinity);
+    html += `<tr>
+      <td>#${p.index}</td>
+      <td class="muted">${p.start} → ${p.end}</td>
+      <td class="${p.stratReturn >= 0 ? 'pos' : 'neg'}">${fmtSignedPct(p.stratReturn)}</td>
+      <td class="muted">${fmtSignedPct(p.benchReturn)}</td>
+      <td class="${beat ? 'pos' : 'neg'}">${beat ? 'Beat benchmark' : 'Trailed benchmark'}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  return html;
+}
+
+function renderEquityChart(stratCurve, benchCurve){
+  const width = 1000, height = 320, padL = 50, padR = 20, padT = 20, padB = 30;
+  const plotW = width - padL - padR, plotH = height - padT - padB;
+
+  const allVals = stratCurve.map(p=>p.value).concat(benchCurve.map(p=>p.value));
+  const minV = Math.min(...allVals) * 0.98;
+  const maxV = Math.max(...allVals) * 1.02;
+
+  function toXY(curve, i){
+    const x = padL + (i / (curve.length - 1)) * plotW;
+    const y = padT + plotH - ((curve[i].value - minV) / (maxV - minV)) * plotH;
+    return [x, y];
+  }
+
+  function pathFor(curve){
+    return curve.map((p, i) => {
+      const [x,y] = toXY(curve, i);
+      return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+  }
+
+  const gridLines = [0,0.25,0.5,0.75,1].map(f => {
+    const y = padT + plotH * f;
+    const val = maxV - (maxV - minV) * f;
+    return `<line x1="${padL}" y1="${y}" x2="${width-padR}" y2="${y}" stroke="var(--line)" stroke-width="1"/>
+      <text x="${padL-8}" y="${y+4}" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="10" fill="var(--paper-dim)">$${Math.round(val).toLocaleString()}</text>`;
+  }).join('');
+
+  return `<svg viewBox="0 0 ${width} ${height}" style="width:100%;height:auto;">
+    ${gridLines}
+    <path d="${pathFor(benchCurve)}" fill="none" stroke="var(--paper-dim)" stroke-width="1.5"/>
+    <path d="${pathFor(stratCurve)}" fill="none" stroke="var(--amber)" stroke-width="2"/>
+  </svg>`;
+}
+
+btRunBtn.addEventListener('click', runBacktest);
+</script>
+</body>
+</html>
